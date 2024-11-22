@@ -1,0 +1,135 @@
+# %%
+# COVID-19 Economic Impact Analysis
+
+# This notebook analyzes the economic impact of COVID-19 across various countries using data science techniques. We'll explore trends in key economic indicators such as GDP growth, unemployment rates, and poverty levels.
+
+# %%
+# Importing Libraries
+
+library(tidyverse)  # For data manipulation and visualization
+library(lubridate)  # For date handling
+library(caret)      # For machine learning tools
+library(corrplot)   # For correlation visualization
+
+# These libraries provide essential tools for data analysis:
+# - tidyverse: A collection of R packages for data science
+# - lubridate: Simplifies working with dates and times
+# - caret: Offers functions for training and plotting machine learning models
+# - corrplot: Visualization of correlation matrices
+
+# %%
+# Loading the Dataset
+
+# Load dataset from CSV file
+df <- read.csv('covid_economic_impact.csv')
+
+# Display the first few rows of the dataset
+head(df)
+
+# The dataset includes:
+# - country: The country being analyzed
+# - date: The date of the recorded data
+# - gdp_growth: GDP growth rate during the pandemic
+# - unemployment_rate: Unemployment rate during the pandemic
+# - poverty_rate: Poverty rate changes due to economic conditions
+
+# %%
+# Data Preprocessing
+
+# Convert date column to Date type
+df$date <- as.Date(df$date)
+
+# Check for missing values
+missing_values <- colSums(is.na(df))
+print(missing_values)
+
+# Remove rows with missing values
+df <- na.omit(df)
+
+# Data preprocessing ensures data quality:
+# - Converting dates allows for time-based analysis
+# - Handling missing values prevents skewed results and ensures model accuracy
+
+# %%
+# Exploratory Data Analysis (EDA)
+
+# Plot GDP growth over time
+ggplot(df, aes(x = date, y = gdp_growth, color = country)) +
+  geom_line() +
+  labs(title = "GDP Growth Over Time by Country",
+       x = "Date", y = "GDP Growth (%)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Visualization helps understand economic trends:
+# - Line plots show how GDP growth changed over time for different countries
+# - This allows for comparison of economic responses and recovery patterns
+
+# %%
+# Correlation Analysis
+
+# Create correlation matrix
+cor_matrix <- cor(df[c("gdp_growth", "unemployment_rate", "poverty_rate")])
+
+# Visualize correlation matrix
+corrplot(cor_matrix, method = "color", type = "upper", order = "hclust", 
+         addCoef.col = "black", number.cex = 0.7, tl.col = "black", tl.srt = 45)
+
+# Correlation analysis reveals relationships between economic indicators:
+# - Strong correlations can inform policy decisions
+# - It highlights which areas may need more attention or intervention
+
+# %%
+# Training a Predictive Model
+
+# Prepare data for modeling
+X <- df[c("unemployment_rate", "poverty_rate")]
+y <- df$gdp_growth
+
+# Split data into training and testing sets
+set.seed(42)
+train_index <- createDataPartition(y, p = 0.8, list = FALSE)
+X_train <- X[train_index, ]
+X_test <- X[-train_index, ]
+y_train <- y[train_index]
+y_test <- y[-train_index]
+
+# Train linear regression model
+model <- lm(y_train ~ ., data = X_train)
+
+# Linear regression is used because:
+# - It provides a straightforward way to model relationships between variables
+# - Coefficients are easily interpretable, showing the impact of each feature on GDP growth
+
+# %%
+# Making Predictions
+
+# Make predictions on the test set
+y_pred <- predict(model, newdata = X_test)
+
+# %%
+# Evaluating Model Performance
+
+# Calculate Mean Squared Error (MSE)
+mse <- mean((y_test - y_pred)^2)
+
+# Calculate R-squared (R²)
+r2 <- 1 - sum((y_test - y_pred)^2) / sum((y_test - mean(y_test))^2)
+
+cat("Mean Squared Error:", mse, "\n")
+cat("R² Score:", r2, "\n")
+
+# Model evaluation metrics:
+# - Mean Squared Error (MSE): Measures the average squared difference between predicted and actual values. Lower values indicate better fit.
+# - R-squared (R²): Indicates the proportion of variance in the dependent variable predictable from independent variables. Values closer to 1 suggest better predictive power.
+
+# %%
+# Conclusion
+
+# This analysis explored the economic impact of COVID-19 using data science and machine learning techniques. Key takeaways:
+# - Data preprocessing is crucial for accurate analysis
+# - Visualizations help identify trends and patterns in economic indicators
+# - Correlation analysis reveals relationships between different economic factors
+# - Linear regression can predict GDP growth based on unemployment and poverty rates
+# - Model evaluation metrics provide insights into the model's performance and limitations
+
+# These findings can inform policymakers and businesses about economic trends and potential strategies for recovery.
